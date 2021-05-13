@@ -904,6 +904,31 @@ public interface Callable<V> {
 - `AtomicLongFieldUpdater`：原子更新长整形字段的更新器
 - `AtomicReferenceFieldUpdater`：原子更新引用类型字段的更新器
 
+注意：在使用的时候bean的字段必须要不能是private 而且是volatile字段
+
+```java
+public class AtomUser {
+	// 不能是private， 必须要volatile
+    public volatile String name;
+
+    public AtomUser() {
+    }
+
+@Test
+void AtomicReferenceField() {
+    // cannot access a member of class mytest.jdk.thread.atoms.AtomUser with modifiers "private"
+    // Must be volatile type
+    AtomicReferenceFieldUpdater<AtomUser, String> fieldUpdater
+            = AtomicReferenceFieldUpdater.newUpdater(AtomUser.class, String.class, "name");
+    String name = "old name";
+    AtomUser atomUser = new AtomUser(name);
+    boolean b1 = fieldUpdater.compareAndSet(atomUser, name, "新的名字");
+    boolean b2 = fieldUpdater.compareAndSet(atomUser, name, "新的名字2");
+}
+```
+
+
+
 ### 2.3.24. AQS 了解么？
 
 AQS 的全称为（`AbstractQueuedSynchronizer`），这个类在`java.util.concurrent.locks`包下面。
@@ -933,7 +958,8 @@ AQS 原理这部分参考了部分博客，在 5.2 节末尾放了链接。
 AQS 使用一个 int 成员变量来表示同步状态，通过内置的 FIFO 队列来完成获取资源线程的排队工作。AQS 使用 CAS 对该同步状态进行原子操作实现对其值的修改。
 
 ```java
-private volatile int state;//共享变量，使用volatile修饰保证线程可见性
+//共享变量，使用volatile修饰保证线程可见性
+private volatile int state;
 ```
 
 状态信息通过 protected 类型的 getState，setState，compareAndSetState 进行操作
