@@ -132,7 +132,7 @@ Java 线程在运行的生命周期中的指定时刻只可能处于下面 6 种
 
 ![RUNNABLE-VS-RUNNING](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-3/RUNNABLE-VS-RUNNING.png)
 
-当线程执行 `wait()`方法之后，线程进入 **WAITING（等待）** 状态。进入等待状态的线程需要依靠其他线程的通知才能够返回到运行状态，而 **TIME_WAITING(超时等待)** 状态相当于在等待状态的基础上增加了超时限制，比如通过 `sleep（long millis）`方法或 `wait（long millis）`方法可以将 Java 线程置于 TIMED WAITING 状态。当超时时间到达后 Java 线程将会返回到 RUNNABLE 状态。当线程调用同步方法时，在没有获取到锁的情况下，线程将会进入到 **BLOCKED（阻塞）** 状态。线程在执行 Runnable 的`run()`方法之后将会进入到 **TERMINATED（终止）** 状态。
+当线程执行 `wait()`方法之后，线程进入 **WAITING（等待）** 状态。进入等待状态的线程需要依靠其他线程的通知才能够返回到运行状态，而 **TIME_WAITING(超时等待)** 状态相当于在等待状态的基础上增加了超时限制，比如通过 `sleep（long millis）`方法或 `wait（long millis）`方法可以将 Java 线程置于 TIMED WAITING 状态。**当超时时间到达后 Java 线程将会返回到 RUNNABLE 状态**。当线程调用同步方法时，在没有获取到锁的情况下，线程将会进入到 **BLOCKED（阻塞）** 状态。线程在执行 Runnable 的`run()`方法之后将会进入到 **TERMINATED（终止）** 状态。
 
 ### 2.3.7. 什么是上下文切换?
 
@@ -142,7 +142,7 @@ Java 线程在运行的生命周期中的指定时刻只可能处于下面 6 种
 
 上下文切换通常是计算密集型的。也就是说，它需要相当可观的处理器时间，在每秒几十上百次的切换中，每次切换都需要纳秒量级的时间。所以，上下文切换对系统来说意味着消耗大量的 CPU 时间，事实上，可能是操作系统中时间消耗最大的操作。
 
-Linux 相比与其他操作系统（包括其他类 Unix 系统）有很多的优点，其中有一项就是，其上下文切换和模式切换的时间消耗非常少。
+Linux 相比与其他操作系统（包括其他类 Unix 系统）有很多的优点，其中有一项就是，其<u>上下文切换和模式切换的时间消耗非常少</u>。
 
 ### 2.3.8. 什么是线程死锁?如何避免死锁?
 
@@ -204,6 +204,8 @@ Thread[线程 1,5,main]waiting get resource2
 Thread[线程 2,5,main]waiting get resource1
 ```
 
+![image-20210512145830414](https://i.loli.net/2021/05/12/7LXSFm1yTng83hp.png)
+
 线程 A 通过 synchronized (resource1) 获得 resource1 的监视器锁，然后通过`Thread.sleep(1000);`让线程 A 休眠 1s 为的是让线程 B 得到执行然后获取到 resource2 的监视器锁。线程 A 和线程 B 休眠结束了都开始企图请求获取对方的资源，然后这两个线程就会陷入互相等待的状态，这也就产生了死锁。上面的例子符合产生死锁的四个必要条件。
 
 学过操作系统的朋友都知道产生死锁必须具备以下四个条件：
@@ -222,7 +224,7 @@ Thread[线程 2,5,main]waiting get resource1
 3. **破坏不剥夺条件** ：占用部分资源的线程进一步申请其他资源时，如果申请不到，可以主动释放它占有的资源。
 4. **破坏循环等待条件** ：靠按序申请资源来预防。按某一顺序申请资源，释放资源则反序释放。破坏循环等待条件。
 
-我们对线程 2 的代码修改成下面这样就不会产生死锁了。
+我们对线程 2 的代码修改成下面这样就不会产生死锁了。(不要形成闭环，破坏条件四)
 
 ```java
         new Thread(() -> {
@@ -264,6 +266,14 @@ Process finished with exit code 0
 - 两者都可以暂停线程的执行。
 - `wait()` 通常被用于线程间交互/通信，`sleep()`通常被用于暂停执行。
 - `wait()` 方法被调用后，线程不会自动苏醒，需要别的线程调用同一个对象上的 `notify()`或者 `notifyAll()` 方法。`sleep()`方法执行完成后，线程会自动苏醒。或者可以使用 `wait(long timeout)` 超时后线程会自动苏醒。
+
+**问题：sleep()还是runnable吗？**
+
+相当于超时等待。
+
+![image-20210512150939100](https://i.loli.net/2021/05/12/exNTmQYifw5ZGMV.png)
+
+
 
 ### 2.3.10. 为什么我们调用 start() 方法时会执行 run() 方法，为什么我们不能直接调用 run() 方法？
 
@@ -428,6 +438,10 @@ public class SynchronizedDemo2 {
 
 **不过两者的本质都是对对象监视器 monitor 的获取。**
 
+---
+
+
+
 ### 2.3.15. 为什么要弄一个 CPU 高速缓存呢？
 
 类比我们开发网站后台系统使用的缓存（比如 Redis）是为了解决程序处理速度和访问常规关系型数据库速度不对等的问题。 **CPU 缓存则是为了解决 CPU 处理速度和内存处理速度不对等的问题。**
@@ -444,7 +458,7 @@ public class SynchronizedDemo2 {
 
 先复制一份数据到 CPU Cache 中，当 CPU 需要用到的时候就可以直接从 CPU Cache 中读取数据，当运算完成后，再将运算得到的数据写回 Main Memory 中。但是，这样存在 **内存缓存不一致性的问题** ！比如我执行一个 i++操作的话，如果两个线程同时执行的话，假设两个线程从 CPU Cache 中读取的 i=1，两个线程做了 1++运算完之后再写回 Main Memory 之后 i=2，而正确结果应该是 i=3。
 
-**CPU 为了解决内存缓存不一致性问题可以通过制定缓存一致协议或者其他手段来解决。**
+CPU 为了解决内存缓存不一致性问题可以通过**制定缓存一致协议**或者其他手段来解决。
 
 ### 2.3.16. 讲一下 JMM(Java 内存模型)
 
@@ -526,6 +540,79 @@ ThreadLocalMap(ThreadLocal<?> firstKey, Object firstValue) {
 
 ![ThreadLocal内部类](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-6/ThreadLocal内部类.png)
 
+相当于一个ThreadLocal可以注册很多个Thread，然后就可以保存对应的值。
+
+```java
+public class ThreadLocalMapTest {
+    public static void main(String[] args) {
+        for (int i = 0; i < 10; i++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    ThreadLocal<Object> objectThreadLocal = new ThreadLocal<>();
+                    objectThreadLocal.set("老屁股" + Thread.currentThread().getName());
+                    show(objectThreadLocal);
+                }
+                private void show(ThreadLocal<Object> objectThreadLocal) {
+                    Object o = objectThreadLocal.get();
+                    System.out.println(o);
+                }
+            }).start();
+        }
+    }
+}
+```
+
+有个问题:线程池维护的线程，从ThreadLocal中拿出自己的ThreadLocalMap中的值如果不remove()是不是还在？
+
+构建一个只有一个线程的线程池 ，操作线程的ThreadLocalMap中的值，去设置值，然后创建十个任务去减掉，看看会不会减。答案是：**线程池复用线程就是会复用ThreadLocalMap**
+
+```java
+public class ThreadLocalTest2 {
+    public static void main(String[] args) {
+        ThreadLocal<Integer> objectThreadLocal = new ThreadLocal<>();
+        // 创建一个只有一个线程的线程池
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        for (int i = 0; i < 10; i++) {
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    String name = Thread.currentThread().getName();
+                    System.out.println("当前线程的名字：" + name);
+                    Integer integer = objectThreadLocal.get();
+                    if (integer == null || integer == 0) {
+                        objectThreadLocal.set(10);
+                    } else {
+                        objectThreadLocal.set(--integer);
+                    }
+                    System.out.println("当前ThreadLocalMap对应的值" + integer);
+                }
+            });
+        }
+    }
+}
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值null
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值9
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值8
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值7
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值6
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值5
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值4
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值3
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值2
+当前线程的名字：pool-1-thread-1
+当前ThreadLocalMap对应的值1
+```
+
 ### 2.3.20. ThreadLocal 内存泄露问题了解不？
 
 `ThreadLocalMap` 中使用的 key 为 `ThreadLocal` 的弱引用,而 value 是强引用。所以，如果 `ThreadLocal` 没有被外部强引用的情况下，在垃圾回收的时候，key 会被清理掉，而 value 不会被清理掉。这样一来，`ThreadLocalMap` 中就会出现 key 为 null 的 Entry。假如我们不做任何措施的话，value 永远无法被 GC 回收，这个时候就可能会产生内存泄露。ThreadLocalMap 实现中已经考虑了这种情况，在调用 `set()`、`get()`、`remove()` 方法的时候，会清理掉 key 为 null 的记录。使用完 `ThreadLocal`方法后 最好手动调用`remove()`方法
@@ -547,6 +634,10 @@ ThreadLocalMap(ThreadLocal<?> firstKey, Object firstValue) {
 > 如果一个对象只具有弱引用，那就类似于**可有可无的生活用品**。弱引用与软引用的区别在于：只具有弱引用的对象拥有更短暂的生命周期。在垃圾回收器线程扫描它 所管辖的内存区域的过程中，一旦发现了只具有弱引用的对象，不管当前内存空间足够与否，都会回收它的内存。不过，由于垃圾回收器是一个优先级很低的线程， 因此不一定会很快发现那些只具有弱引用的对象。
 >
 > 弱引用可以和一个引用队列（ReferenceQueue）联合使用，如果弱引用所引用的对象被垃圾回收，Java 虚拟机就会把这个弱引用加入到与之关联的引用队列中。
+
+[Java面试必问：ThreadLocal终极篇 淦！](https://mp.weixin.qq.com/s/LzkZXPtLW2dqPoz3kh3pBQ)
+
+
 
 ### 2.3.21. 线程池
 
@@ -708,7 +799,11 @@ public interface Callable<V> {
 
 举个例子： Spring 通过 `ThreadPoolTaskExecutor` 或者我们直接通过 `ThreadPoolExecutor` 的构造函数创建线程池的时候，当我们不指定 `RejectedExecutionHandler` 饱和策略的话来配置线程池的时候默认使用的是 `ThreadPoolExecutor.AbortPolicy`。在默认情况下，`ThreadPoolExecutor` 将抛出 `RejectedExecutionException` 来拒绝新来的任务 ，这代表你将丢失对这个任务的处理。 对于可伸缩的应用程序，建议使用 `ThreadPoolExecutor.CallerRunsPolicy`。当最大池被填满时，此策略为我们提供可伸缩队列。（这个直接查看 `ThreadPoolExecutor` 的构造函数源码就可以看出，比较简单的原因，这里就不贴代码了）
 
+
+
 #### 2.3.21.6. 线程池原理分析
+
+4.6在哪里  ？
 
 承接 4.6 节，我们通过代码输出结果可以看出：**线程池每次会同时执行 5 个任务，这 5 个任务执行完之后，剩余的 5 个任务才会被执行。** 大家可以先通过上面讲解的内容，分析一下到底是咋回事？（自己独立思考一会）
 
@@ -741,7 +836,7 @@ public interface Callable<V> {
                 return;
             c = ctl.get();
         }
-        // 2.如果当前之行的任务数量大于等于 corePoolSize 的时候就会走到这里
+        // 2.如果当前执行的任务数量大于等于 corePoolSize 的时候就会走到这里
         // 通过 isRunning 方法判断线程池状态，线程池处于 RUNNING 状态才会被并且队列可以加入任务，该任务才会被加入进去
         if (isRunning(c) && workQueue.offer(command)) {
             int recheck = ctl.get();
